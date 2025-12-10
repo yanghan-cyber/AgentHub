@@ -10,8 +10,11 @@ from langchain_openai import ChatOpenAI
 from deepagents.backends import FilesystemBackend
 from dotenv import load_dotenv
 from deepagents import CompiledSubAgent
+from utils.logger import get_logger
 
 load_dotenv(override=True)
+
+logger = get_logger(__name__)
 
 backend = FilesystemBackend(
     "D:/ai_lab/langgraph-agents/agent-store-space", virtual_mode=True
@@ -36,6 +39,7 @@ if __name__ == "__main__":
     async def main(user_input):
         async for mode, chunk in os_agent.astream({"messages": [{"role": "user", "content": user_input}]},config=config1, context=context,stream_mode=["values"]):
             if 'messages' in chunk:
-                chunk['messages'][-1].pretty_print()
+                message = chunk['messages'][-1]
+                logger.info(f"Agent response:\n{message}")
     asyncio.run(main("读取一下文件夹里的所有文件看看，并获取里面的内容，总结一下里面的内容给我, 并且把内容增加到temp文件中去。"))
 

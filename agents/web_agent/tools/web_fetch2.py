@@ -19,6 +19,10 @@ from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 # --- MarkItDown 组件 ---
 from markitdown import MarkItDown
 
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 # =================配置区=================
 
 # 1. 浏览器伪装头 (解决 403 Forbidden 关键)
@@ -65,7 +69,7 @@ async def _process_with_markitdown(url: str, content_type: str = None) -> str:
     """
     文档处理通道：下载 -> 保存临时文件(带正确后缀) -> MarkItDown 转换
     """
-    print(f"[MarkItDown] Downloading doc: {url}")
+    logger.info(f"[MarkItDown] Downloading doc: {url}")
 
     temp_path = None
     try:
@@ -90,7 +94,7 @@ async def _process_with_markitdown(url: str, content_type: str = None) -> str:
                 # 4. 默认
                 if not ext: ext = ".tmp"
 
-                print(f"[MarkItDown] Type: {content_type} | Ext: {ext}")
+                logger.info(f"[MarkItDown] Type: {content_type} | Ext: {ext}")
 
                 # 创建临时文件 - 使用异步方式避免阻塞
                 loop = asyncio.get_running_loop()
@@ -140,7 +144,7 @@ async def _crawl_url(url: str) -> str:
     2. 如果是文档 -> MarkItDown
     3. 如果是网页 -> Crawl4AI
     """
-    print(f"[SmartFetch] Analyzing: {url}")
+    logger.info(f"[SmartFetch] Analyzing: {url}")
 
     # --- A. 探测阶段 ---
     is_document = False
@@ -152,7 +156,7 @@ async def _crawl_url(url: str) -> str:
             async with session.head(url, allow_redirects=True, timeout=5) as resp:
                 # 如果 HEAD 被屏蔽 (403/405)，我们假设它是普通网页，交给 Crawl4AI 强行处理
                 if resp.status in [403, 404, 405]:
-                    print(f"[SmartFetch] Head request denied ({resp.status}), fallback to crawler.")
+                    logger.info(f"[SmartFetch] Head request denied ({resp.status}), fallback to crawler.")
                 else:
                     ctype = resp.headers.get('Content-Type', '').lower().split(';')[0].strip()
                     detected_type = ctype
@@ -163,16 +167,16 @@ async def _crawl_url(url: str) -> str:
                     # 额外检查：URL 是否以常见文档后缀结尾 (双重保险)
                     elif any(url.lower().endswith(x) for x in ['.pdf', '.docx', '.xlsx', '.pptx']):
                         is_document = True
-                        
+
     except Exception as e:
-        print(f"[SmartFetch] Detection error: {e}, proceeding as web page.")
+        logger.info(f"[SmartFetch] Detection error: {e}, proceeding as web page.")
 
     # --- B. 分发阶段 ---
     if is_document:
         return await _process_with_markitdown(url, detected_type)
     else:
         # === Crawl4AI 网页抓取配置 ===
-        print(f"[Crawl4AI] Starting browser for: {url}")
+        logger.info(f"[Crawl4AI] Starting browser for: {url}")
         
         browser_config = BrowserConfig(
             headless=True,
@@ -255,15 +259,15 @@ async def web_fetch(url: str, start_index: int = 0, max_length: int = 6000) -> s
 if __name__ == "__main__":
     async def main():
         # 1. 测试你的那个困难 URL (无后缀 + 可能 403)
-        print("--- Test 1: Complex Doc URL ---")
+        logger.info("--- Test 1: Complex Doc URL ---")
         complex_url = "https://gsy.hunnu.edu.cn/system/_content/download.jsp?urltype=news.DownloadAttachUrl&owner=1564207687&wbfileid=5407913"
         res = await web_fetch.ainvoke({"url": complex_url})
-        print(f"Result Preview:\n{res[:300]}...") 
+        logger.info(f"Result Preview:\n{res[:300]}...")
 
         # 2. 测试普通动态网页
-        print("\n--- Test 2: Dynamic Web Page ---")
+        logger.info("--- Test 2: Dynamic Web Page ---")
         web_url = "https://github.com/trending"
         res2 = await web_fetch.ainvoke({"url": web_url})
-        print(f"Result Preview:\n{res2[:300]}...")
+        logger.info(f"Result Preview:\n{res2[:300]}...")
 
     asyncio.run(main())

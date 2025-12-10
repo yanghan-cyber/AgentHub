@@ -7,6 +7,9 @@ from langchain.agents.middleware import TodoListMiddleware
 from agents.web_agent.tools import web_fetch, web_search
 from langchain_openai import ChatOpenAI
 from agents.web_agent.prompt import RESEARCHER_SYSTEM_PROMPT
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 web_agent = create_agent(
     model=ChatOpenAI(model=os.getenv("OPENAI_MODEL")),
@@ -37,7 +40,8 @@ if __name__ == "__main__":
             {"messages": "Deepseek v3.2的创新技术有哪些？"}, stream_mode=["values"]
         ):
             if "messages" in chunk:
-                chunk["messages"][-1].pretty_print()
+                message = chunk["messages"][-1]
+                logger.info(f"Agent response:\n{message}")
 
 
     asyncio.run(main())

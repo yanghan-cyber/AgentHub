@@ -11,6 +11,10 @@ from async_lru import alru_cache  # pip install async_lru
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
 from crawl4ai.content_filter_strategy import PruningContentFilter
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
+
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 # --- 配置 ---
 # 代理配置 (如果你需要通过代理访问)
 # 注意：Crawl4AI (Playwright) 的代理格式通常是 "server": "http://127.0.0.1:7890"
@@ -43,7 +47,7 @@ async def _crawl_url(url: str) -> str:
     """
     使用 Crawl4AI 启动无头浏览器抓取网页，并返回 Markdown。
     """
-    print(f"[Crawl4AI] Starting crawl for: {url}")
+    logger.info(f"[Crawl4AI] Starting crawl for: {url}")
 
     # A. 浏览器配置
     # 如果有代理，需要在这里注入
@@ -182,22 +186,22 @@ if __name__ == "__main__":
         # 测试 URL: GitHub Trending (这是典型的动态网页，旧方法抓不到内容)
         test_url = "https://memos-docs.openmem.net/cn/dashboard/api/overview"
 
-        print(f"--- 1. Testing Crawl (Fresh) ---")
+        logger.info(f"--- 1. Testing Crawl (Fresh) ---")
         t0 = time.time()
         # 第一次调用，会启动浏览器抓取
         res1 = await web_fetch.ainvoke({"url": test_url, "max_length": 50000})
-        print(f"Time: {time.time() - t0:.2f}s")
-        print(f"Preview:\n{res1}")  # 打印前200字符
+        logger.info(f"Time: {time.time() - t0:.2f}s")
+        logger.info(f"Preview:\n{res1}")  # 打印前200字符
 
-        print(f"\n--- 2. Testing Pagination (Cache Hit) ---")
+        logger.info(f"--- 2. Testing Pagination (Cache Hit) ---")
         t1 = time.time()
         # 第二次调用，只是翻页，应该瞬间完成 (0.00s)
         res2 = await web_fetch.ainvoke(
             {"url": test_url, "start_index": 500, "max_length": 500}
         )
-        print(f"Time: {time.time() - t1:.4f}s")
+        logger.info(f"Time: {time.time() - t1:.4f}s")
 
         # 验证缓存是否生效
-        print(f"Cache Info: {_crawl_url.cache_info()}")
+        logger.info(f"Cache Info: {_crawl_url.cache_info()}")
 
     asyncio.run(main())

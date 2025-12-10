@@ -4,6 +4,10 @@ import asyncio
 from typing import List, Dict, Any, Optional
 import aiohttp
 
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 class MemosClient:
     def __init__(self, api_key: str = None, base_url: str = None, session: aiohttp.ClientSession = None):
         """
@@ -89,7 +93,7 @@ class MemosClient:
             # 格式化清洗：只保留 role 和 content
             return [{"role": m["role"], "content": m["content"]} for m in raw_list]
         else:
-            print(f"Error getting history: {result.get('message')}")
+            logger.warning(f"Error getting history: {result.get('message')}")
             return []
 
     async def search_memory(
@@ -128,7 +132,7 @@ class MemosClient:
             if result.get("code") == 0:
                 return result.get("data", {})
             else:
-                print(f"[MemosClient] Search Error: {result.get('message')}")
+                logger.warning(f"[MemosClient] Search Error: {result.get('message')}")
                 return {}
 
 # ================= 使用示例 =================
@@ -140,19 +144,19 @@ async def main():
         user_id = "memos_user_demo"
         conv_id = "conv_001"
 
-        print("--- 1. 上报消息 ---")
+        logger.info("--- 1. 上报消息 ---")
         new_msgs = [
             {"role": "user", "content": "我下周要去成都出差，有什么推荐的火锅吗？"},
             {"role": "assistant", "content": "成都有很多不错的火锅，比如蜀大侠、小龙坎。"}
         ]
         res_add = await client.add_messages(user_id, conv_id, new_msgs)
-        print(f"Add Result: {res_add}")
+        logger.info(f"Add Result: {res_add}")
 
-        print("\n--- 2. 获取历史 (清洗版) ---")
+        logger.info("\n--- 2. 获取历史 (清洗版) ---")
         history = await client.get_history(user_id, conv_id, limit=5)
-        print(json.dumps(history, ensure_ascii=False, indent=2))
+        logger.info(json.dumps(history, ensure_ascii=False, indent=2))
 
-        print("\n--- 3. 搜索记忆 ---")
+        logger.info("\n--- 3. 搜索记忆 ---")
         # 假设用户之前说过不喜欢吃太辣的
         query = "还是给我推荐点不辣的吧，我肠胃不好。"
         memory_context = await client.search_memory(user_id, query, conv_id)
@@ -160,11 +164,11 @@ async def main():
         # 打印检索到的偏好 (如果有)
         preferences = memory_context.get("preference_detail_list", [])
         if preferences:
-            print("发现用户偏好:")
+            logger.info("发现用户偏好:")
             for pref in preferences:
-                print(f"- {pref.get('preference')}")
+                logger.info(f"- {pref.get('preference')}")
         else:
-            print("未发现相关偏好记忆。")
+            logger.info("未发现相关偏好记忆。")
 
 if __name__ == "__main__":
     from dotenv import load_dotenv

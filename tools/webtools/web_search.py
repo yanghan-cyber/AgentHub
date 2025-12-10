@@ -1,8 +1,12 @@
 import os
 from typing import Literal, Optional
-from langchain.tools import tool  
+from langchain.tools import tool
 from pydantic import BaseModel, Field
 from tavily import TavilyClient
+
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SearchInput(BaseModel):
@@ -44,8 +48,8 @@ def web_search(query: str, topic: str = "general", days: Optional[int] = None, s
         return "<error>Tavily API key is missing. Please set TAVILY_API_KEY env var.</error>"
 
     try:
-        print(f"[Tavily] Searching: {query} (Depth: {search_depth})")
-        
+        logger.info(f"[Tavily] Searching: {query} (Depth: {search_depth})")
+
         # 执行搜索
         response = tavily_client.search(
             query=query,
@@ -92,9 +96,10 @@ if __name__ == "__main__":
     # os.environ["TAVILY_API_KEY"] = "tvly-你的key"
     
     # 重新初始化一下以便测试读到 key
-    import dotenv 
+    import dotenv
     dotenv.load_dotenv()
     if os.getenv("TAVILY_API_KEY"):
          tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
-    print(web_search.invoke({"query": "Python requests vs httpx difference", "search_depth": "basic"}))
+    result = web_search.invoke({"query": "Python requests vs httpx difference", "search_depth": "basic"})
+    print(result)

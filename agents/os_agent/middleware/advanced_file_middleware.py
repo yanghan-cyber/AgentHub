@@ -16,6 +16,10 @@ from langchain_core.messages import SystemMessage
 from deepagents.backends.protocol import BackendProtocol
 from deepagents.backends import FilesystemBackend
 
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 # --- Prompts ---
 
 ADVANCED_READ_TOOL_DESCRIPTION = """
@@ -99,7 +103,7 @@ If TYPE B: Provide a descriptive summary of what is shown in the image.
 !Important: If the image contains both a scene and significant text (e.g., a street sign in a landscape), describe the scene first, then quote the text found within it."""
         if api_key:
             try:
-                print(f"[MarkItDown] Initializing with LLM support (Model: {model_name})...")
+                logger.info(f"[MarkItDown] Initializing with LLM support (Model: {model_name})...")
                 client = OpenAI(
                     api_key=api_key,
                     base_url=base_url
@@ -111,10 +115,10 @@ If TYPE B: Provide a descriptive summary of what is shown in the image.
                     llm_prompt=llm_prompt
                 )
             except Exception as e:
-                print(f"[MarkItDown] LLM Init Error: {e}. Falling back to basic mode.")
+                logger.warning(f"[MarkItDown] LLM Init Error: {e}. Falling back to basic mode.")
                 return MarkItDown()
         else:
-            print("[MarkItDown] Running in basic mode (No Image/OCR support).")
+            logger.info("[MarkItDown] Running in basic mode (No Image/OCR support).")
             return MarkItDown()
 
     def _create_advanced_read_tool(self):
@@ -270,7 +274,7 @@ if __name__ == "__main__":
         virtual_mode=False,
         max_file_size_mb=200,
     )
-    
+
     async def main():
         backend = FilesystemBackend(
             "D:/ai_lab/langgraph-agents",
@@ -278,16 +282,14 @@ if __name__ == "__main__":
             max_file_size_mb=200,
         )
         mid = AdvancedFileMiddleware(backend=backend)
-        
+
         res = await mid.tools[0].ainvoke(
             {
                 "file_path": "D:/ai_lab/langgraph-agents/agent-store-space/.gitkeep"
             }
         )
-        
+
         return res
-    
-        
-    
-    print(asyncio.run(main()))
-        
+
+    result = asyncio.run(main())
+    print(result)

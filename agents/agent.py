@@ -23,8 +23,11 @@ from agents.web_agent.middleware.base import WebAgentMiddleware
 from agents.web_agent.prompt import RESEARCHER_SYSTEM_PROMPT
 from agents.web_agent.tools import web_fetch, web_search
 from memory.middleware import MemOSMiddleware
+from utils.logger import get_logger
 
 load_dotenv(override=True)
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -124,5 +127,6 @@ if __name__ == "__main__":
         ):
             if "messages" in chunk:
                 chunk["messages"][-1].pretty_print()
-
-    asyncio.run(main("查看一下当前的文件夹，并且查看一下里面的内容是什么"))
+                # message = chunk["messages"][-1]
+                # logger.info(f"Agent response:\n{message}")
+    asyncio.run(main("今天星期几啦"))
